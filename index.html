@@ -3,56 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wandering Cat</title>
+    <title>Bouncing Ball</title>
     <style>
         /* Indie Dark Theme */
         :root {
             --bg: #1a1b26;
             --text: #a9b1d6;
             --accent: #7aa2f7;
-            --secondary: #565f89;
             --highlight: #ff9e64;
+            --ball: #ff9e64;
         }
         
         body {
             background-color: var(--bg);
             color: var(--text);
-            font-family: 'Courier New', monospace;
             margin: 0;
             overflow: hidden;
             height: 100vh;
+            font-family: 'Courier New', monospace;
         }
         
-        #cat {
+        #ball {
             position: absolute;
-            width: 100px;
-            height: 80px;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80"><path fill="%23ff9e64" d="M50 10c10 0 20 5 20 15s-10 15-20 15-20-5-20-15 10-15 20-15z"/><circle cx="40" cy="15" r="2" fill="%231a1b26"/><circle cx="60" cy="15" r="2" fill="%231a1b26"/><path fill="none" stroke="%231a1b26" stroke-width="1.5" d="M45 20q5 5 10 0"/><path fill="%23ff9e64" d="M30 25c-15 5-20 25-10 35l10-5-5-10 15 5 10-15v20l15-5-5-15 15 10c10-15 0-35-15-35z"/><path fill="%237aa2f7" d="M25 50c-5 15 5 20 15 10l-5-5zM75 50c5 15-5 20-15 10l5-5z"/></svg>');
-            background-repeat: no-repeat;
-            transition: all 2s ease-in-out;
+            width: 60px;
+            height: 60px;
+            background-color: var(--ball);
+            border-radius: 50%;
+            box-shadow: 0 0 20px var(--highlight);
             z-index: 100;
-            cursor: pointer;
-        }
-        
-        #cat.paused {
-            animation: none;
-            filter: brightness(0.7);
         }
         
         #controls {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background: rgba(0,0,0,0.7);
+            background: rgba(26, 27, 38, 0.8);
             padding: 10px;
             border-radius: 5px;
             z-index: 1000;
+            border: 1px solid var(--accent);
         }
         
         button {
-            background: var(--secondary);
+            background: var(--bg);
             color: var(--text);
-            border: none;
+            border: 1px solid var(--accent);
             padding: 5px 10px;
             margin: 0 5px;
             border-radius: 3px;
@@ -62,102 +57,105 @@
         
         button:hover {
             background: var(--accent);
+            color: var(--bg);
         }
         
-        #counter {
+        #stats {
             position: fixed;
             top: 20px;
             left: 20px;
-            background: rgba(0,0,0,0.7);
+            background: rgba(26, 27, 38, 0.8);
             padding: 10px;
             border-radius: 5px;
+            border: 1px solid var(--accent);
         }
     </style>
 </head>
 <body>
-    <div id="cat" title="Click to pet me!"></div>
-    <div id="counter">Steps: <span id="steps">0</span></div>
+    <div id="ball"></div>
+    <div id="stats">
+        Bounces: <span id="bounceCount">0</span> | 
+        Speed: <span id="speed">5</span>px/frame
+    </div>
     <div id="controls">
-        <button id="pauseBtn">Pause</button>
-        <button id="themeBtn">Change Theme</button>
+        <button id="colorBtn">Change Color</button>
+        <button id="speedBtn">Change Speed</button>
     </div>
 
     <script>
-        const cat = document.getElementById('cat');
-        const stepsCounter = document.getElementById('steps');
-        const pauseBtn = document.getElementById('pauseBtn');
-        const themeBtn = document.getElementById('themeBtn');
-        let steps = 0;
-        let isPaused = false;
-        let currentTheme = 0;
+        const ball = document.getElementById('ball');
+        const bounceCount = document.getElementById('bounceCount');
+        const speedDisplay = document.getElementById('speed');
+        const colorBtn = document.getElementById('colorBtn');
+        const speedBtn = document.getElementById('speedBtn');
         
-        // Themes array
-        const themes = [
-            { name: "Indie Dark", bg: "#1a1b26", text: "#a9b1d6", accent: "#7aa2f7", secondary: "#565f89", highlight: "#ff9e64" },
-            { name: "Forest", bg: "#1e2a2a", text: "#c3d7d7", accent: "#5dbb63", secondary: "#3a5757", highlight: "#e8b15b" },
-            { name: "Midnight", bg: "#0f0f1a", text: "#d0d0f0", accent: "#6a5acd", secondary: "#30304a", highlight: "#ff69b4" }
-        ];
+        // Initial setup
+        let x = 100;
+        let y = 100;
+        let dx = 5;
+        let dy = 5;
+        let bounces = 0;
+        const ballSize = 60;
+        const colors = ['#ff9e64', '#7aa2f7', '#9ece6a', '#bb9af7', '#e0af68'];
+        let currentColor = 0;
         
-        // Move cat randomly
-        function moveCat() {
-            if (isPaused) return;
+        // Update ball position
+        function update() {
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
             
-            const windowWidth = window.innerWidth - 100;
-            const windowHeight = window.innerHeight - 80;
-            
-            const randomX = Math.floor(Math.random() * windowWidth);
-            const randomY = Math.floor(Math.random() * windowHeight);
-            
-            cat.style.left = `${randomX}px`;
-            cat.style.top = `${randomY}px`;
-            
-            // Flip cat based on direction
-            if (parseInt(cat.style.left || 0) < randomX) {
-                cat.style.transform = 'scaleX(1)';
-            } else {
-                cat.style.transform = 'scaleX(-1)';
+            // Check for wall collisions
+            if (x + dx > windowWidth - ballSize || x + dx < 0) {
+                dx = -dx;
+                bounces++;
+                bounceCount.textContent = bounces;
             }
             
-            steps++;
-            stepsCounter.textContent = steps;
+            if (y + dy > windowHeight - ballSize || y + dy < 0) {
+                dy = -dy;
+                bounces++;
+                bounceCount.textContent = bounces;
+            }
             
-            // Random delay between 2-5 seconds
-            setTimeout(moveCat, 2000 + Math.random() * 3000);
+            // Update position
+            x += dx;
+            y += dy;
+            
+            ball.style.left = `${x}px`;
+            ball.style.top = `${y}px`;
+            
+            requestAnimationFrame(update);
         }
         
-        // Change theme
-        function changeTheme() {
-            currentTheme = (currentTheme + 1) % themes.length;
-            const theme = themes[currentTheme];
-            
-            document.documentElement.style.setProperty('--bg', theme.bg);
-            document.documentElement.style.setProperty('--text', theme.text);
-            document.documentElement.style.setProperty('--accent', theme.accent);
-            document.documentElement.style.setProperty('--secondary', theme.secondary);
-            document.documentElement.style.setProperty('--highlight', theme.highlight);
-            
-            themeBtn.textContent = `Theme: ${theme.name}`;
+        // Change ball color
+        function changeColor() {
+            currentColor = (currentColor + 1) % colors.length;
+            ball.style.backgroundColor = colors[currentColor];
+            ball.style.boxShadow = `0 0 20px ${colors[currentColor]}`;
+            document.documentElement.style.setProperty('--ball', colors[currentColor]);
+        }
+        
+        // Change speed
+        function changeSpeed() {
+            const newSpeed = Math.floor(Math.random() * 10) + 2;
+            dx = (dx > 0 ? newSpeed : -newSpeed);
+            dy = (dy > 0 ? newSpeed : -newSpeed);
+            speedDisplay.textContent = newSpeed;
         }
         
         // Event listeners
-        cat.addEventListener('click', () => {
-            cat.style.transform += ' rotate(-15deg)';
-            setTimeout(() => {
-                cat.style.transform = cat.style.transform.replace(' rotate(-15deg)', '');
-            }, 300);
+        colorBtn.addEventListener('click', changeColor);
+        speedBtn.addEventListener('click', changeSpeed);
+        
+        // Click to teleport
+        ball.addEventListener('click', (e) => {
+            e.stopPropagation();
+            x = Math.random() * (window.innerWidth - ballSize);
+            y = Math.random() * (window.innerHeight - ballSize);
         });
         
-        pauseBtn.addEventListener('click', () => {
-            isPaused = !isPaused;
-            cat.classList.toggle('paused');
-            pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
-        });
-        
-        themeBtn.addEventListener('click', changeTheme);
-        
-        // Start the animation
-        moveCat();
-        changeTheme(); // Initialize theme
+        // Start animation
+        update();
     </script>
 </body>
 </html>
