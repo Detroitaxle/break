@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Break Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⏱️ Break Tracker</h1>
+            <div class="controls">
+                <button id="addEmployeeBtn">➕ Add Employee</button>
+                <button id="settingsBtn">⚙️ Settings</button>
+            </div>
+        </header>
+
+        <div class="dashboard">
+            <div class="panel active-breaks">
+                <h2>On Break Now</h2>
+                <ul id="activeBreaksList"></ul>
+            </div>
+            
+            <div class="panel break-queue">
+                <h2>Break Queue</h2>
+                <ul id="breakQueueList"></ul>
+            </div>
+            
+            <div class="panel employee-list">
+                <h2>All Employees</h2>
+                <ul id="employeeList"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="employeeModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Add Employee</h2>
+            <form id="employeeForm">
+                <input type="text" id="empName" placeholder="Full Name" required>
+                <input type="text" id="empPosition" placeholder="Position">
+                <input type="number" id="breakDuration" placeholder="Break Duration (mins)" value="15" min="5" max="60">
+                <button type="submit">Save Employee</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="breakModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Manage Break</h2>
+            <div id="breakControls">
+                <button id="startBreakBtn">Start Break</button>
+                <button id="endBreakBtn">End Break Early</button>
+                <div class="timer" id="breakTimer">15:00</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
